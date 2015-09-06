@@ -15,7 +15,7 @@ def long_desc():
     return readme_text
 
 setup(name='gruepy',
-      version='0.0.1'
+      version='0.0.1',
       long_description=long_desc(),
       author='Paul Barton',
       author_email='pablo.barton@gmail.com',
