@@ -6,6 +6,9 @@ utilities for running an application with gruepy.
 """
 
 import asyncio
+import logging
+import os
+
 from .curses_helpers import init_curses, end_curses
 
 class Application(object):
@@ -26,6 +29,8 @@ class Application(object):
     def run(self):
         """
         """
+        os.environ['PYTHONASYNCIODEBUG'] = 1
+        logging.basicConfig(level=logging.DEBUG)	
         try:
             init_curses(escape_delay=self.escape_delay, use_mouse=self.use_mouse)
             self.loop.call_until_complete(self.main())
