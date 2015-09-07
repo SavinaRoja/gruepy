@@ -1,5 +1,5 @@
 #/usr/bin/env python
-# -*- coding: utf-8 -*-
+#encoding: utf-8
 
 try:
     from setuptools import setup
@@ -20,7 +20,7 @@ setup(name='gruepy',
       author='Paul Barton',
       author_email='pablo.barton@gmail.com',
       url='https://github.com/SavinaRoja/gruepy',
-      install_requires=['wcwidth>=1.0.4',],
+      install_requires=['wcwidth>=0.1.4',],
       packages=['gruepy',],
       license='http://www.gnu.org/licenses/gpl-3.0.html',
       keywords='gruepy, curses, ncurses, terminal, console, UI, asynchronous',

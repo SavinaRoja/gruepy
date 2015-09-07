@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#encoding: utf-8
 
 """
 
@@ -7,7 +7,8 @@
 import curses
 import locale
 import os
-import subprocess
+#import subprocess
+
 
 def init_curses(escape_delay=None, use_mouse=True):
     """
@@ -20,9 +21,9 @@ def init_curses(escape_delay=None, use_mouse=True):
             os.environ['ESCDELAY'] = '10'  # A 10ms delay as default
     else:
         os.environ['ESCDELAY'] = str(escape_delay)
-    
+
     #Initialize our curses environment
-    return_code = None
+    #return_code = None
     locale.setlocale(locale.LC_ALL, '')
     stdscr = curses.initscr()
     try:
@@ -35,9 +36,12 @@ def init_curses(escape_delay=None, use_mouse=True):
     stdscr.keypad(1)
 
     if use_mouse:
-        curses.mousemask(curses.ALL_MOUSE_EVENTS) 
+        curses.mousemask(curses.ALL_MOUSE_EVENTS)
 
-def end_curses():
+    return stdscr
+
+
+def end_curses(stdscr):
     """
     """
     stdscr.keypad(0)

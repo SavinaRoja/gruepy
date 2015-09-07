@@ -5,18 +5,22 @@ import weakref
 
 from .widget import Widget
 
+
 class Container(Widget):
     """
     """
-    def __init__(self
-                 form
+    def __init__(self,
+                 workspace,
                  parent,
                  *args,
                  **kwargs):
-
+        super(Container, self).__init__(workspace,
+                                        parent,
+                                        *args,
+                                        **kwargs)
         self.contained = []
         self.contained_map = {}
-        self._default_widget = 0`
+        self._default_widget = 0
 
     def add_widget(self,
                    widget_class,
@@ -39,7 +43,7 @@ class Container(Widget):
         if max_width is None:
             max_width = self.max_width
 
-        widget = widget_class(self.form,
+        widget = widget_class(self.workspace,
                               self,
                               relx=relx,
                               rely=rely,

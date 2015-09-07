@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#encoding: utf-8
 
 """
 gruepy is a framework for creating terminal user interfaces with ncurses.
@@ -16,11 +16,11 @@ is a low concern.
 
 from .wrapper import wrapper
 
-from .application import App
+from .application import Application
 
-from .containers import Container
+from .container import Container
 
-from .widgets import Widget
+from .widget import Widget
 
 from .workspace import Workspace
 
