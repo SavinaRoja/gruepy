@@ -12,7 +12,7 @@ import locale
 class Widget(object):
 
     def __init__(self,
-                 form,
+                 workspace,
                  parent,
                  relx=0,
                  rely=0,
@@ -26,9 +26,9 @@ class Widget(object):
                  **kwargs):
 
         try:
-            self.form = weakref.proxy(form)
+            self.workspace = weakref.proxy(workspace)
         except TypeError:
-            self.form = form
+            self.workspace = workspace
 
         try:
             self.parent = weakref.proxy(parent)
@@ -42,11 +42,10 @@ class Widget(object):
         self.requested_width, self.requested_height = width, height
         self.width, self.height = width, height
 
-        self.relx, self.rely  = relx, rely
+        self.relx, self.rely = relx, rely
 
         self.editable = editable
         self.hidden = hidden
-
 
 ## Some Aspects of Size Management
 # Recall that Containers inherit from Widgets, so this applies to them also
@@ -63,7 +62,7 @@ class Widget(object):
 #
 # 4. The dimensions passed in during instantiation are stored in
 #    requested_height/requested_width attributes and these are not to be
-#    modified by either the Widget or Parent. 
+#    modified by either the Widget or Parent.
 #
 # 5. A Widget's height/width attributes may not report a value greater than
 #    its max_height/max_width.
