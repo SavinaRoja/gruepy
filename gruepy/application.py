@@ -12,6 +12,7 @@ from functools import partial
 import logging
 import os
 import datetime
+import weakref
 
 from .curses_helpers import init_curses, end_curses
 
@@ -20,6 +21,8 @@ class Application(object):
     """
     The basic object of a gruepy application.
     """
+
+    STARTING_WORKSPACE = "MAIN"
 
     def __init__(self,
                  escape_delay=None,
@@ -30,6 +33,8 @@ class Application(object):
         self.escape_delay = escape_delay
         self.use_mouse = use_mouse
 
+        self.workspaces = {}
+
         self.loop = asyncio.get_event_loop()
 
         self.main_future = None
@@ -38,12 +43,11 @@ class Application(object):
         """
         """
         os.environ['PYTHONASYNCIODEBUG'] = '1'
-        logging.basicConfig(level=logging.DEBUG)
         try:
             stdscr = init_curses(escape_delay=self.escape_delay,
                                  use_mouse=self.use_mouse)
-
             main_task = asyncio.async(self.main())
+
             user_input_task = asyncio.async(self.user_input())
             tasks = [main_task,
                      user_input_task]

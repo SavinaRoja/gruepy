@@ -21,6 +21,3 @@ from .application import Application
 #from .container import Container
 
 #from .widget import Widget
-
-#from .workspace import Workspace
-
