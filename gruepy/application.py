@@ -6,9 +6,12 @@ utilities for running an application with gruepy.
 """
 
 import asyncio
+from concurrent.futures import CancelledError
+import curses
+from functools import partial
 import logging
 import os
-import weakref
+import datetime
 
 from .curses_helpers import init_curses, end_curses
 
@@ -17,8 +20,6 @@ class Application(object):
     """
     The basic object of a gruepy application.
     """
-
-    STARTING_WORKSPACE = "MAIN"
 
     def __init__(self,
                  escape_delay=None,
@@ -29,95 +30,98 @@ class Application(object):
         self.escape_delay = escape_delay
         self.use_mouse = use_mouse
 
-        self.workspaces = {}
-
         self.loop = asyncio.get_event_loop()
+
+        self.main_future = None
 
     def run(self):
         """
         """
-        os.environ['PYTHONASYNCIODEBUG'] = 1
+        os.environ['PYTHONASYNCIODEBUG'] = '1'
         logging.basicConfig(level=logging.DEBUG)
         try:
             stdscr = init_curses(escape_delay=self.escape_delay,
                                  use_mouse=self.use_mouse)
-            self.loop.call_until_complete(self.main())
+
+            main_task = asyncio.async(self.main())
+            user_input_task = asyncio.async(self.user_input())
+            tasks = [main_task,
+                     user_input_task]
+
+            self.main_future = main_task
+
+            done, pending = self.loop.run_until_complete(
+                    asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED))
+
+            #Clean up the pending coroutine tasks
+            try:
+                self.loop.run_until_complete(asyncio.gather(*pending))
+            except CancelledError:
+                pass
+            self.loop.stop()
         finally:
             self.loop.close()
             end_curses(stdscr)
 
-    def add_workspace(self, workspace_class, workspace_id, *args, **kwargs):
-        """
-        Create a workspace of the given class. workspace_id should be a string
-        which will uniquely identify the workspace. *args and **kwargs will be
-        passed to the workspace constructor.
-        """
-        workspace = workspace_class(parent_app=self,
-                                    #keypress_timeout=self.keypress_timeout_default,
-                                    *args,
-                                    **kwargs)
-        self.workspaces[workspace_id] = workspace_id
-        return weakref.proxy(workspace)
-
-    def remove_workspace(self, workspace_id):
-        del self.workspaces[workspace_id].parent_app
-        del self.workspaces[workspace_id]
-
-    def get_workspace(self, workspace_id):
-        workspace = self.workspaces[workspace_id]
-        try:
-            return weakref.proxy(workspace)
-        except:
-            return workspace
-
-    def set_next_workspace(self, workspace_id):
-        """
-        Set the workspace that will be selected when the current one exits.
-        """
-        self.next_active_workspace = workspace_id
-
-    #def switch_workspace(self, workspace_id):
-        #"""
-        #Immediately switch to the workspace specified by workspace_id.
-        #"""
-        #self._THISFORM.editing = False
-        #self.set_next_form(workspace_id)
-        #self.switch_form_now()
-
     @asyncio.coroutine
     def main(self):
-        """
-        This function starts the application. It is usually called indirectly
-        through the `run` method.
-        You should not override this function, but override the
-        `on_in_main_loop`, `on_start` and `on_clean_exit` methods instead, if
-        you need to modify the application's behaviour.
-        """
+        self.curses_pad = curses.newpad(24, 80)
+        self.addstr(0, 0, 'Press keys and mouse to test. Esc to quit.')
+        self.loop.call_soon(self.show_time)
+        while not self.main_future.cancelled():
+            yield from asyncio.sleep(0.1)
 
-        self.on_start()
-        while self.next_active_workspace is not None:
-            self.active_workspace = self.workspaces[self.next_active_workspace]
-            self.active_workspace._resize()
+    def addstr(self, row, col, string, refresh=True):
+        self.curses_pad.addstr(row, col, string)
+        if refresh:
+            self.curses_pad.refresh(0, 0, 0, 0, 23, 79)
 
-            self.on_in_main_loop()
-        self.on_clean_exit()
+    def show_time(self):
+        self.addstr(1, 0, str(datetime.datetime.now()))
+        self.loop.call_soon(self.show_time)
 
-    def on_in_main_loop(self):
-        """
-        Called between each screen while the application is running. Not called
-        before the first screen. Override at will.
-        """
-        pass
+    def print_ch(self, message):
+        self.addstr(2, 0, ' ' * 80, refresh=False)
+        self.addstr(2, 0, 'Character received: ' + repr(message))
 
-    def on_start(self):
-        """
-        Override this method to perform any initialisation.
-        """
-        pass
+    @asyncio.coroutine
+    def get_wch(self):
+        curses.raw()
+        curses.cbreak()
+        self.curses_pad.timeout(10)
+        self.curses_pad.keypad(1)
+        try:
+            ch = self.curses_pad.get_wch()
+        except curses.error:
+            pass
+        else:
+            return ch
 
-    def on_clean_exit(self):
-        """
-        Override this method to perform any cleanup when application is exiting
-        without error.
-        """
-        pass
+    @asyncio.coroutine
+    def user_input(self):
+        while not self.main_future.cancelled():
+            curses.raw()
+            curses.cbreak()
+            curses.meta(1)
+            event = yield from asyncio.async(self.get_wch())
+            if event is None:
+                continue
+            if event == curses.KEY_MOUSE:
+                self.loop.call_soon(partial(self.mouse_event_handler,
+                                            *curses.getmouse()))
+            else:
+                self.loop.call_soon(partial(self.key_event_handler, event))
+
+    def quit(self):
+        self.main_future.cancel()
+
+    def key_event_handler(self, event):
+        handlers = {'\x1b': self.quit}
+        if event in handlers:
+            handlers[event]()
+        else:
+            self.print_ch(event)
+
+    def mouse_event_handler(self, short_id, x, y, z, bstate):
+        self.addstr(2, 0, ' ' * 80, refresh=False)
+        self.addstr(2, 0, 'Mouse: ' + repr((short_id, x, y, z, bstate)))

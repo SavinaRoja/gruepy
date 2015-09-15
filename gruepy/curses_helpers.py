@@ -7,7 +7,6 @@
 import curses
 import locale
 import os
-#import subprocess
 
 
 def init_curses(escape_delay=None, use_mouse=True):
