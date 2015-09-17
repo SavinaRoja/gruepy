@@ -1,7 +1,7 @@
 #encoding: utf-8
 
-import copy
-import sys
+#import copy
+#import sys
 import curses
 import time
 import weakref
@@ -12,7 +12,7 @@ import locale
 class Widget(object):
 
     def __init__(self,
-                 workspace,
+                 application,
                  parent,
                  relx=0,
                  rely=0,
@@ -124,4 +124,3 @@ class Widget(object):
         if value is None:
             value = 0
         self._height = value
-
