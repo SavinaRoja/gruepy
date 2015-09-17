@@ -112,11 +112,6 @@ class Workspace(Container):
                 raise ValueError
         except (ValueError, NameError):
             max_y, max_x = curses.newwin(0, 0).getmaxyx()
-
-        #return safe values, i.e. slightly smaller.
-        #I think the -1 is to account for 0-index: e.g. 10th columnn is col[9]
-        #If this is the case, I may want to remove this subtraction
-        #return (max_y - 1, max_x - 1)
         return (max_y, max_x)
 
     def resize(self):
