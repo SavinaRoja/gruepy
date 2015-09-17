@@ -9,7 +9,7 @@ import locale
 import os
 
 
-def init_curses(escape_delay=None, use_mouse=True):
+def init_curses(escape_delay=None, use_mouse=False):
     """
     """
     #The ESCDELAY environment variable controls how long curses waits in getch
@@ -36,6 +36,7 @@ def init_curses(escape_delay=None, use_mouse=True):
 
     if use_mouse:
         curses.mousemask(curses.ALL_MOUSE_EVENTS)
+        #curses.mousemask(curses.REPORT_MOUSE_POSITION)
 
     return stdscr
 
